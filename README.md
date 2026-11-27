@@ -1,39 +1,62 @@
 # planner
 Planner for clubs like KLJB and Minis -> Goal: Create the timeplan faster and clearer
 
-## Lokal starten
+Reine Webseite (HTML/CSS/JavaScript im Ordner `public/`), gehostet auf **GitHub Pages**.
+Login und Daten liegen in **Supabase** – ein eigener Server ist nicht nötig.
 
-Voraussetzung: Node.js 20.6 oder neuer.
+## Aufbau
 
-```bash
-npm install
-npm start        # Daten in data/db.json
-npm run dev      # Daten in Supabase (liest .env)
-```
+| Pfad | Inhalt |
+| --- | --- |
+| `public/` | Die Webseite – genau dieser Ordner wird veröffentlicht |
+| `public/config.js` | Supabase-URL und öffentlicher Schlüssel |
+| `public/backend.js` | Alle Datenbank-Zugriffe (Supabase) |
+| `public/lib/` | Plan-Logik (Bardienst-Generator, Miniplan) |
+| `supabase/schema.sql` | Tabellen und Zugriffsregeln für Supabase |
+| `.github/workflows/pages.yml` | Veröffentlicht `public/` automatisch bei jedem Push |
 
-Dann im Browser http://localhost:3000 öffnen.
-
-## Datenbank: Supabase einrichten
+## 1. Supabase einrichten (einmalig)
 
 1. Auf https://supabase.com ein kostenloses Projekt anlegen (Region z. B. Frankfurt).
-2. Im Dashboard **SQL Editor** öffnen, den Inhalt von [`supabase/schema.sql`](supabase/schema.sql) einfügen und **Run** klicken.
-3. Unter **Project Settings → API** die **Project URL** und den **service_role**-Schlüssel kopieren.
-4. `.env.example` nach `.env` kopieren und beide Werte eintragen.
-5. Bestehende lokale Daten übertragen (optional, einmalig):
-   ```bash
-   npm run import
-   ```
+2. **SQL Editor** öffnen, den Inhalt von [`supabase/schema.sql`](supabase/schema.sql) einfügen, **Run**.
+3. **Project Settings → API**: die **Project URL** und den **anon / publishable** Key kopieren
+   und in [`public/config.js`](public/config.js) eintragen.
+   Den `service_role`/`secret` Key **niemals** dort eintragen.
+4. **Authentication → URL Configuration**:
+   - **Site URL**: `https://<github-name>.github.io/<repository>/`
+   - **Redirect URLs**: dieselbe Adresse und `http://localhost:3000/` hinzufügen
+   (dorthin führt der Link in der Bestätigungs-E-Mail).
 
-Der `service_role`-Schlüssel hat vollen Zugriff auf die Datenbank. Er gehört nur auf den Server bzw. in die Einstellungen des Hosters, nie ins Git-Repository (`.env` ist in `.gitignore`).
+Der anon-Key steht öffentlich in der Webseite – das ist so gedacht. Die Tabellen sind mit
+Row Level Security geschützt: Jede Person sieht und ändert nur ihre eigenen Daten.
 
-## Veröffentlichen (Render.com)
+## 2. Lokal testen
 
-1. Projekt auf GitHub hochladen (ohne `.env` und `data/`).
-2. Auf https://render.com **New → Blueprint** wählen und das Repository verbinden – `render.yaml` wird erkannt.
-3. Bei den Umgebungsvariablen `SUPABASE_URL` und `SUPABASE_SERVICE_ROLE_KEY` eintragen.
-4. Nach dem Deploy ist die Seite unter `https://<name>.onrender.com` erreichbar (HTTPS inklusive).
+Voraussetzung: Node.js 18 oder neuer.
 
-Hinweise:
-- Es darf nur **eine** Server-Instanz laufen (die Daten werden beim Start geladen und im Speicher gehalten).
-- Im kostenlosen Render-Plan schläft der Server nach 15 Minuten ohne Besuch ein; der erste Aufruf danach dauert ca. 30–60 Sekunden.
-- Andere Hoster (Railway, Fly.io, eigener Server) funktionieren genauso: `npm ci`, `npm start`, die zwei Umgebungsvariablen setzen.
+```bash
+npm start
+```
+
+Dann http://localhost:3000 öffnen. Lokal wird dieselbe Supabase-Datenbank benutzt wie online.
+
+## 3. Veröffentlichen auf GitHub Pages
+
+1. Das Repository muss **öffentlich** sein (GitHub Pages für private Repositories gibt es nur mit bezahltem Plan):
+   **Settings → General → Danger Zone → Change visibility**.
+2. **Settings → Pages → Build and deployment → Source: „GitHub Actions“**.
+3. Änderungen auf `main` pushen. Unter **Actions** läuft „Deploy to GitHub Pages“; danach ist die Seite unter
+   `https://<github-name>.github.io/<repository>/` erreichbar.
+
+Jeder weitere Push auf `main` aktualisiert die Seite automatisch.
+
+## Alte lokale Daten übernehmen (optional)
+
+Konten aus der früheren Version (`data/db.json`) gibt es in Supabase nicht – bitte neu registrieren. Danach:
+
+```bash
+node scripts/export-sql.js deine@email.de > import.sql
+```
+
+Den Inhalt von `import.sql` im Supabase **SQL Editor** ausführen. Namen, Abwesenheiten, Bardienstpläne und Miniplan
+werden dann deinem neuen Konto zugeordnet.

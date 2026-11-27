@@ -5,16 +5,8 @@ let currentPlan = null;
 
 const $ = (sel) => document.querySelector(sel);
 
-async function api(method, url, body) {
-  const res = await fetch(url, {
-    method,
-    headers: body ? { "Content-Type": "application/json" } : {},
-    body: body ? JSON.stringify(body) : undefined,
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw Object.assign(new Error(data.error || "Fehler"), { status: res.status });
-  return data;
-}
+// Alle Daten laufen über Supabase (backend.js); die "/api/..."-Pfade sind nur noch Namen.
+const api = (method, url, body) => Backend.request(method, url, body);
 
 function showView(name) {
   for (const v of ["login", "choose", "names"]) $(`#view-${v}`).hidden = v !== name;
@@ -32,7 +24,13 @@ function setUser(user) {
 
 // ---------- Anmeldung ----------
 
+function showNotice(msg) {
+  $("#loginNotice").textContent = msg || "";
+  $("#loginNotice").hidden = !msg;
+}
+
 function switchTab(tab) {
+  showNotice();
   document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
   $("#loginForm").hidden = tab !== "login";
   $("#registerForm").hidden = tab !== "register";
@@ -70,11 +68,16 @@ $("#registerForm").addEventListener("submit", async (e) => {
     return showError(errorEl, "Die Passwörter stimmen nicht überein.");
   }
   try {
-    const { user } = await api("POST", "/api/register", {
+    const { user, confirmEmail } = await api("POST", "/api/register", {
       email: form.get("email"),
       username: form.get("username"),
       password: form.get("password"),
     });
+    if (confirmEmail) {
+      e.target.reset();
+      switchTab("login");
+      return showNotice(`Fast geschafft! Wir haben dir eine E-Mail an ${form.get("email")} geschickt. Klicke auf den Link darin und melde dich dann hier an.`);
+    }
     onLoggedIn(user);
   } catch (err) {
     showError(errorEl, err.message);
@@ -580,6 +583,10 @@ async function removeName(id) {
 // ---------- Start ----------
 
 (async () => {
+  if (!Backend.configured) {
+    showView("login");
+    return showNotice("Die Datenbank ist noch nicht verbunden: Bitte in public/config.js die Supabase-URL und den anon-Schlüssel eintragen.");
+  }
   try {
     const { user } = await api("GET", "/api/me");
     setUser(user);

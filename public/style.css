@@ -370,3 +370,5 @@ textarea { resize: vertical; }
 .danger:hover { background: var(--error); color: #fff; }
 .row-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; align-items: center; margin-top: 8px; }
 #clearAbsencesBtn { margin-top: 12px; }
+
+.notice { background: color-mix(in srgb, var(--primary) 12%, transparent); border: 1px solid var(--primary); border-radius: 8px; padding: 10px 12px; margin: 12px 0; }
