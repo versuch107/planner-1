@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Planner</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <span class="brand">Planner</span>
+    <div id="userbox" class="userbox" hidden>
+      <span id="userLabel"></span>
+      <button id="logoutBtn" class="link">Abmelden</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- 1. Anmeldung -->
+    <section id="view-login" class="card" hidden>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="login" role="tab">Anmelden</button>
+        <button class="tab" data-tab="register" role="tab">Registrieren</button>
+      </div>
+
+      <form id="loginForm">
+        <p class="muted">Willkommen zurück! Melde dich mit deiner E-Mail und deinem Passwort an.</p>
+        <label>E-Mail
+          <input type="email" name="email" required autocomplete="email" placeholder="name@beispiel.de" />
+        </label>
+        <label>Passwort
+          <input type="password" name="password" required autocomplete="current-password" />
+        </label>
+        <p class="error" hidden></p>
+        <button type="submit" class="primary">Anmelden</button>
+      </form>
+
+      <form id="registerForm" hidden>
+        <p class="muted">Neu hier? Lege dein Konto an. Deine Listen sieht nur du.</p>
+        <label>E-Mail
+          <input type="email" name="email" required autocomplete="email" placeholder="name@beispiel.de" />
+        </label>
+        <label>Benutzername
+          <input type="text" name="username" required minlength="2" maxlength="40" autocomplete="username" placeholder="z. B. alina" />
+        </label>
+        <label>Passwort <span class="hint">(mindestens 8 Zeichen)</span>
+          <input type="password" name="password" required minlength="8" autocomplete="new-password" />
+        </label>
+        <label>Passwort wiederholen
+          <input type="password" name="password2" required minlength="8" autocomplete="new-password" />
+        </label>
+        <p class="error" hidden></p>
+        <button type="submit" class="primary">Konto erstellen</button>
+      </form>
+    </section>
+
+    <!-- 2. Planauswahl -->
+    <section id="view-choose" hidden>
+      <h1>Was möchtest du erstellen?</h1>
+      <div class="choices">
+        <button class="choice" data-plan="bardienst">
+          <span class="choice-icon">🍺</span>
+          <strong>Bardienstplan</strong>
+          <span class="muted">Einteilung für den Bardienst</span>
+        </button>
+        <button class="choice" data-plan="mini">
+          <span class="choice-icon">⛪</span>
+          <strong>Miniplan</strong>
+          <span class="muted">Einteilung der Ministranten</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- 3. Namen eintragen -->
+    <section id="view-names" class="card" hidden>
+      <button id="backBtn" class="link">← Zurück zur Auswahl</button>
+      <h1 id="planTitle"></h1>
+      <form id="nameForm">
+        <div class="inline-form">
+          <input type="text" name="name" required maxlength="100" placeholder="Name eintragen" autocomplete="off" />
+          <button type="submit" class="primary">Hinzufügen</button>
+        </div>
+        <div class="label-row">
+          <span class="hint">Labels:</span>
+          <div id="newLabels" class="label-picker"></div>
+        </div>
+      </form>
+      <p id="nameError" class="error" hidden></p>
+
+      <div id="labelFilter" class="label-row filter-row" hidden>
+        <span class="hint">Filtern:</span>
+        <div class="label-picker"></div>
+      </div>
+
+      <h2>Liste <span id="nameCount" class="badge">0</span></h2>
+      <p id="emptyHint" class="muted">Noch keine Namen eingetragen.</p>
+      <ul id="nameList" class="name-list"></ul>
+
+      <!-- Abwesenheiten -->
+      <div id="absenceSection" class="sub-section" hidden>
+        <h2>Abwesenheiten</h2>
+        <p class="muted">Wähle eine oder mehrere Personen und trage einen oder mehrere Zeiträume ein. Für einen einzelnen Tag einfach nur „Von“ ausfüllen.</p>
+        <form id="absenceForm">
+          <div class="field-label">Personen <button type="button" id="absenceAll" class="link small">alle</button> · <button type="button" id="absenceNone" class="link small">keine</button></div>
+          <div id="absencePeople" class="label-picker"></div>
+
+          <div class="field-label">Zeiträume</div>
+          <div id="absenceRanges"></div>
+          <button type="button" id="addRangeBtn" class="link small">+ weiteren Zeitraum</button>
+
+          <label>Notiz <span class="hint">(optional, z. B. „Urlaub“)</span>
+            <input type="text" name="note" maxlength="100" autocomplete="off" />
+          </label>
+          <p class="error" hidden></p>
+          <button type="submit" class="primary">Abwesenheit eintragen</button>
+        </form>
+
+        <ul id="absenceList" class="absence-list"></ul>
+        <button type="button" id="clearAbsencesBtn" class="danger" hidden>Alle Abwesenheiten löschen</button>
+      </div>
+
+      <!-- Miniplan -->
+      <div id="miniSection" class="schedule-section" hidden>
+        <h2>Miniplan</h2>
+
+        <div class="settings-grid">
+          <label>Von <input type="date" id="miniFrom" /></label>
+          <label>Bis <input type="date" id="miniTo" /></label>
+        </div>
+
+        <h3>Besondere Anlässe</h3>
+        <p class="muted">Z. B. Heiligabend, Erstkommunion, Firmung. Jeder Gottesdienst im Zeitraum wird hier einzeln eingetragen. Stehen alle Zahlen auf 0, fällt er aus.</p>
+        <div class="table-wrap">
+          <table class="edit-table">
+            <thead><tr><th>Datum</th><th>Uhrzeit</th><th>Anlass</th><th>Altardienst</th><th>Sammeln</th><th>Weihrauch</th><th></th></tr></thead>
+            <tbody id="specialRows"></tbody>
+          </table>
+        </div>
+        <div class="row-actions">
+          <button type="button" id="addSpecialBtn" class="link small">+ Anlass</button>
+          <button type="button" id="clearTermineBtn" class="danger">Alle Termine löschen</button>
+        </div>
+
+        <h3>Texte auf dem Plan</h3>
+        <label>Termine <span class="hint">(z. B. Minitreffen, Ausflüge)</span>
+          <textarea id="miniTermineText" rows="3"></textarea>
+        </label>
+        <label>Orga
+          <textarea id="miniOrgaText" rows="3"></textarea>
+        </label>
+        <div class="settings-grid">
+          <label>Plan erstellt von <span class="hint">(bekommt „(Plan)“ bei den Oberminis)</span>
+            <select id="miniPlanBy"></select>
+          </label>
+          <div>
+            <div class="field-label">Logo <span class="hint">(optional)</span></div>
+            <div class="logo-row">
+              <img id="miniLogoPreview" alt="Logo-Vorschau" hidden />
+              <label class="secondary file-btn">Bild wählen<input type="file" id="miniLogoInput" accept="image/png,image/jpeg,image/webp" hidden /></label>
+              <button type="button" id="miniLogoRemove" class="link small" hidden>entfernen</button>
+            </div>
+          </div>
+        </div>
+        <p class="hint">Oberminis auf dem Plan: alle mit dem Label „Oberministrant“. <span id="miniSaveState"></span></p>
+
+        <p id="miniError" class="error" hidden></p>
+
+        <h3>Einteilung</h3>
+        <p id="miniEmpty" class="muted">Trage oben einen Zeitraum und Gottesdienste ein – dann erscheinen sie hier und du kannst die Minis auswählen.</p>
+        <div id="miniResult" hidden>
+          <p id="miniInfo" class="hint schedule-toolbar"></p>
+          <div class="table-wrap">
+            <table class="mini-table">
+              <thead><tr><th>Termin</th><th>Altardienst</th><th>Sammeln</th><th>Weihrauch</th></tr></thead>
+              <tbody id="miniRows"></tbody>
+            </table>
+          </div>
+          <div class="download-bar">
+            <details class="menu" id="miniDownloadMenu">
+              <summary class="primary">⬇ Herunterladen</summary>
+              <div class="menu-items">
+                <button type="button" data-format="pdf"><strong>PDF</strong><span class="hint">zum Drucken oder Verschicken</span></button>
+                <button type="button" data-format="jpeg"><strong>JPEG</strong><span class="hint">Bild, z. B. für WhatsApp</span></button>
+                <button type="button" data-format="csv"><strong>Excel (CSV)</strong><span class="hint">zum Weiterbearbeiten</span></button>
+              </div>
+            </details>
+          </div>
+          <details class="stats">
+            <summary>Einsätze pro Person</summary>
+            <ul id="miniStats"></ul>
+          </details>
+        </div>
+      </div>
+
+      <!-- Erstellter Plan (bisher nur Bardienstplan) -->
+      <div id="scheduleSection" class="schedule-section" hidden>
+        <h2>Plan erstellen</h2>
+        <p class="muted">Wochen von Donnerstag bis Mittwoch, jeweils 2 Personen. Alle kommen möglichst gleich oft dran, niemand zwei Wochen hintereinander, und zwei Neumitglieder werden möglichst nicht zusammen eingeteilt.</p>
+        <div class="schedule-controls">
+          <label class="year-label">Jahr
+            <input type="number" id="scheduleYear" min="2000" max="2100" />
+          </label>
+          <button id="generateBtn" class="primary" type="button">Plan erstellen</button>
+          <button id="openSavedBtn" class="secondary" type="button" hidden>Gespeicherten Plan öffnen</button>
+        </div>
+        <p id="scheduleError" class="error" hidden></p>
+
+        <div id="scheduleResult" hidden>
+          <div class="schedule-toolbar">
+            <span id="scheduleInfo" class="hint"></span>
+          </div>
+          <div id="printArea">
+            <h1 class="print-only" id="printTitle"></h1>
+            <div class="table-wrap">
+              <table id="scheduleTable" class="schedule-table">
+                <thead>
+                  <tr><th>Startdatum</th><th></th><th>Enddatum</th><th>Name1</th><th>Name2</th></tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="download-bar">
+            <details class="menu" id="downloadMenu">
+              <summary class="primary">⬇ Herunterladen</summary>
+              <div class="menu-items">
+                <button type="button" data-format="pdf"><strong>PDF</strong><span class="hint">zum Drucken oder Verschicken</span></button>
+                <button type="button" data-format="jpeg"><strong>JPEG</strong><span class="hint">Bild, z. B. für WhatsApp</span></button>
+                <button type="button" data-format="csv"><strong>Excel (CSV)</strong><span class="hint">zum Weiterbearbeiten</span></button>
+              </div>
+            </details>
+          </div>
+
+          <details class="stats">
+            <summary>Einsätze pro Person</summary>
+            <ul id="scheduleStats"></ul>
+          </details>
+        </div>
+      </div>
+
+      <div class="sub-section reset-section">
+        <h2>Alles zurücksetzen</h2>
+        <p class="muted">Löscht alle Namen, Abwesenheiten, Termine und Einstellungen dieses Plans. Das kann nicht rückgängig gemacht werden.</p>
+        <button type="button" id="resetPlanBtn" class="danger">Komplette Seite löschen</button>
+      </div>
+    </section>
+  </main>
+
+  <script src="export.js"></script>
+  <script src="app.js"></script>
+  <script src="mini.js"></script>
+</body>
+</html>

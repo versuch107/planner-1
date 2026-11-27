@@ -1,0 +1,19 @@
+{
+  "name": "planner",
+  "version": "0.1.0",
+  "description": "Planner for clubs like KLJB and Minis – Bardienstplan & Miniplan",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --env-file=.env server.js",
+    "import": "node --env-file=.env scripts/import-to-supabase.js"
+  },
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.4"
+  },
+  "engines": {
+    "node": ">=20.6"
+  }
+}
