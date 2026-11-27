@@ -6,6 +6,7 @@ const PlanExport = (() => {
   const FONT = 'Calibri, Carlito, "Segoe UI", Arial, sans-serif';
   const STRIPE = "#ffff00";
 
+  
   // title: Überschrift, header: ["Startdatum", ...], rows: [["01.01.2026", "bis", ...], ...]
   // align: pro Spalte "left" | "right" | "center"
   function drawTable({ title, header, rows, align }) {
